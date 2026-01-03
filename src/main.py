@@ -48,7 +48,7 @@ class App(mglw.WindowConfig):
 
         self.display_vao = self.ctx.vertex_array(self.display_prog, [])
 
-        self.face = ft.Face("fonts/FreeSerif.ttf")
+        self.face = ft.Face("fonts/FreeSans.ttf")
         self.face.set_char_size(64, 64)
 
         self.face.load_char("A", ft.FT_LOAD_NO_HINTING)
@@ -119,6 +119,8 @@ class App(mglw.WindowConfig):
 
         self.display_vao.render(moderngl.TRIANGLES, vertices=3)
 
+def main():
+    mglw.run_window_config(App)
 
 if __name__ == "__main__":
-    mglw.run_window_config(App)
+    main()
