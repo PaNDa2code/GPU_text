@@ -48,7 +48,7 @@ class App(mglw.WindowConfig):
 
         self.display_vao = self.ctx.vertex_array(self.display_prog, [])
 
-        self.face = ft.Face("fonts/FreeSans.ttf")
+        self.face = ft.Face("fonts/FreeSerifItalic.ttf")
         self.face.set_char_size(64, 64)
 
         self.face.load_char("A", ft.FT_LOAD_NO_HINTING)
@@ -85,13 +85,13 @@ class App(mglw.WindowConfig):
         self.update_uniforms()
 
     def on_mouse_scroll_event(self, x_offset: float, y_offset: float) -> None:
-        self.scale[0] += y_offset
-        self.scale[1] += y_offset
+        self.scale[0] = max(0.5, self.scale[0] + y_offset)
+        self.scale[1] = max(0.5, self.scale[1] + y_offset)
         self.update_uniforms()
 
     def on_mouse_drag_event(self, x: int, y: int, dx: int, dy: int) -> None:
-        self.offset[0] += dx * 1 / 1000
-        self.offset[1] += -dy * 1 / 1000
+        self.offset[0] += dx / self.window_size[0] * 2
+        self.offset[1] -= dy / self.window_size[1] * 2
         self.update_uniforms()
 
     def on_render(self, time, frame_time):
@@ -119,8 +119,10 @@ class App(mglw.WindowConfig):
 
         self.display_vao.render(moderngl.TRIANGLES, vertices=3)
 
+
 def main():
     mglw.run_window_config(App)
+
 
 if __name__ == "__main__":
     main()
