@@ -3,6 +3,8 @@ import moderngl_window as mglw
 import numpy as np
 import os
 import freetype as ft
+import random
+import string
 
 from font import *
 
@@ -42,22 +44,27 @@ class App(mglw.WindowConfig):
         self.vao = self.ctx.vertex_array(
             self.prog,
             [
-                (self.points_vbo, "2f", "point"),
+                (self.points_vbo, "4f", "point"),
             ],
         )
 
         self.display_vao = self.ctx.vertex_array(self.display_prog, [])
 
-        self.face = ft.Face("fonts/FreeSerifItalic.ttf")
+        self.face = ft.Face("fonts/FreeSans.ttf")
         self.face.set_char_size(64, 64)
 
         self.face.load_char("A", ft.FT_LOAD_NO_HINTING)
 
         self.scale = [1.0, 1.0]
         self.offset = [0.0, 0.0]
+        self.last_glyph_time = 0
+        self.random_glyph = True
 
     def on_unicode_char_entered(self, char: str) -> None:
-        self.face.load_char(char, ft.FT_LOAD_NO_HINTING)
+        if char == " ":
+            self.random_glyph = not self.random_glyph
+        else:
+            self.face.load_char(char, ft.FT_LOAD_NO_HINTING)
 
     def update_uniforms(self) -> None:
         self.prog["u_scale"] = self.scale
@@ -94,7 +101,17 @@ class App(mglw.WindowConfig):
         self.offset[1] -= dy / self.window_size[1] * 2
         self.update_uniforms()
 
+    def on_key_event(self, key, action, modifiers) -> None:
+        if key == self.wnd.keys.SPACE:
+            self.random_glyph = not self.random_glyph
+
     def on_render(self, time, frame_time):
+        if self.random_glyph and time - self.last_glyph_time >= 1.0:
+            self.last_glyph_time = time
+
+            char = random.choice(string.ascii_letters)
+            self.face.load_char(char, ft.FT_LOAD_NO_HINTING)
+
         self.fbo.use()
         self.fbo.clear(0.0, 0.0, 0.0, 1)
 
@@ -102,12 +119,10 @@ class App(mglw.WindowConfig):
         self.ctx.blend_func = moderngl.ONE, moderngl.ONE
 
         outline = self.face.glyph.outline
-        triangles = flat_lines_points(outline)
+        geometry = generate_glyph_geometry(outline)
 
-        vertex_data = np.array(triangles, dtype="float32")
-
-        self.points_vbo.write(vertex_data.tobytes())
-        self.vao.render(moderngl.TRIANGLES, vertices=len(vertex_data) * 3)
+        self.points_vbo.write(geometry.tobytes())
+        self.vao.render(moderngl.TRIANGLES, vertices=len(geometry))
 
         self.ctx.disable(moderngl.BLEND)
 
